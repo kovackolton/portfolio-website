@@ -1,9 +1,42 @@
 @import "tailwindcss";
-@theme inline { --font-sans: Arial, Helvetica, sans-serif; }
-:root { color-scheme: dark; --background: #101113; --foreground: #ededed; --primary: #bef264; --radius: .625rem; }
-body { margin: 0; background: var(--background); color: var(--foreground); font-family: Arial, Helvetica, sans-serif; }
-html { scroll-behavior: smooth; }
-input, textarea { width: 100%; border: 1px solid #3f3f46; border-radius: 8px; padding: 12px; background: #18181b; color: #fff; }
-input:focus, textarea:focus { outline: 2px solid #bef264; outline-offset: 2px; }
-label { display: block; font-size: 14px; margin-bottom: 6px; }
-::selection { background: #bef264; color: #101113; }
+@theme inline { 
+    --font-sans: Arial, Helvetica, sans-serif; 
+    --color-primary: var(--primary);
+}
+:root { 
+    color-scheme: dark; 
+    --background: #101113; 
+    --foreground: #ededed; 
+    --primary: #f55959; 
+    --radius: .625rem; 
+}
+body { 
+    margin: 0; 
+    background: var(--background); 
+    color: var(--foreground); 
+    font-family: Arial, Helvetica, sans-serif; 
+}
+html { 
+    scroll-behavior: smooth; 
+}
+input, textarea { 
+    width: 100%; 
+    border: 1px solid #3f3f46; 
+    border-radius: 8px; 
+    padding: 12px; 
+    background: #18181b; 
+    color: #fff; 
+}
+input:focus, textarea:focus { 
+    outline: 2px solid #f55959; 
+    outline-offset: 2px; 
+}
+label { 
+    display: block; 
+    font-size: 14px; 
+    margin-bottom: 6px; 
+}
+::selection { 
+    background: #f55959; 
+    color: #101113; 
+}
