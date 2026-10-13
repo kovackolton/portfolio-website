@@ -38,6 +38,7 @@ type project struct {
 	Description string   `json:"description" binding:"required,max=4000"`
 	URL         string   `json:"url" binding:"max=2048"`
 	Tags        []string `json:"tags"`
+	SortOrder   int32    `json:"sort_order" binding:"gte=0"`
 }
 type app struct {
 	db            *pgxpool.Pool
@@ -49,6 +50,7 @@ type app struct {
 	password      []byte
 	email, origin string
 	secure        bool
+	mailer        *smtpMailer
 }
 
 func env(key, fallback string) string {
@@ -90,6 +92,17 @@ func main() {
 		log.Fatal(err)
 	}
 	a := &app{db: db, cache: cache, started: time.Now(), password: hash, email: email, origin: env("PUBLIC_ORIGIN", "http://localhost:3000"), secure: env("SESSION_SECURE", "false") == "true"}
+	a.mailer, err = smtpMailerFromEnv(email)
+	if err != nil {
+		log.Fatal(err)
+	}
+	mailContext, stopMail := context.WithCancel(context.Background())
+	defer stopMail()
+	mailDone := make(chan struct{})
+	go func() {
+		defer close(mailDone)
+		a.runContactMailWorker(mailContext)
+	}()
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery(), func(c *gin.Context) {
@@ -124,6 +137,8 @@ func main() {
 	shutdown, done := context.WithTimeout(context.Background(), 10*time.Second)
 	defer done()
 	_ = srv.Shutdown(shutdown)
+	stopMail()
+	<-mailDone
 }
 func (a *app) sameOrigin(c *gin.Context) {
 	if c.Request.Method != "GET" && c.GetHeader("Origin") != a.origin {
@@ -232,7 +247,7 @@ func (a *app) projects(c *gin.Context) {
 	ctx := c.Request.Context()
 	// Generation keys prevent a concurrent reader from filling stale cache after an edit.
 	generation, _ := a.cache.Get(ctx, "projects:generation").Result()
-	key := "projects:" + generation
+	key := "projects:ordered:" + generation
 	if data, err := a.cache.Get(ctx, key).Bytes(); err == nil {
 		a.hits.Add(1)
 		c.Header("X-Cache", "HIT")
@@ -240,7 +255,7 @@ func (a *app) projects(c *gin.Context) {
 		return
 	}
 	a.misses.Add(1)
-	rows, err := a.db.Query(ctx, "SELECT id,title,description,url,tags FROM projects ORDER BY created_at DESC,id DESC")
+	rows, err := a.db.Query(ctx, "SELECT id,title,description,url,tags,sort_order FROM projects ORDER BY sort_order ASC,created_at DESC,id DESC")
 	if err != nil {
 		c.JSON(503, gin.H{"error": "Projects unavailable"})
 		return
@@ -249,7 +264,7 @@ func (a *app) projects(c *gin.Context) {
 	items := []project{}
 	for rows.Next() {
 		var p project
-		if err = rows.Scan(&p.ID, &p.Title, &p.Description, &p.URL, &p.Tags); err != nil {
+		if err = rows.Scan(&p.ID, &p.Title, &p.Description, &p.URL, &p.Tags, &p.SortOrder); err != nil {
 			c.Status(500)
 			return
 		}
@@ -289,7 +304,7 @@ func (a *app) invalidate(ctx context.Context) {
 func (a *app) saveProject(c *gin.Context) {
 	var p project
 	if c.ShouldBindJSON(&p) != nil || !validProject(p) {
-		c.JSON(400, gin.H{"error": "Invalid title, description, tags, or URL"})
+		c.JSON(400, gin.H{"error": "Invalid title, description, tags, URL, or sort order (use a whole number from 0 to 2147483647)"})
 		return
 	}
 	if p.Tags == nil {
@@ -297,14 +312,14 @@ func (a *app) saveProject(c *gin.Context) {
 	}
 	var err error
 	if c.Request.Method == "POST" {
-		err = a.db.QueryRow(c.Request.Context(), "INSERT INTO projects(title,description,url,tags) VALUES($1,$2,$3,$4) RETURNING id", p.Title, p.Description, p.URL, p.Tags).Scan(&p.ID)
+		err = a.db.QueryRow(c.Request.Context(), "INSERT INTO projects(title,description,url,tags,sort_order) VALUES($1,$2,$3,$4,$5) RETURNING id", p.Title, p.Description, p.URL, p.Tags, p.SortOrder).Scan(&p.ID)
 	} else {
 		id, e := strconv.ParseInt(c.Param("id"), 10, 64)
 		if e != nil || id <= 0 {
 			c.Status(400)
 			return
 		}
-		err = a.db.QueryRow(c.Request.Context(), "UPDATE projects SET title=$1,description=$2,url=$3,tags=$4 WHERE id=$5 RETURNING id", p.Title, p.Description, p.URL, p.Tags, id).Scan(&p.ID)
+		err = a.db.QueryRow(c.Request.Context(), "UPDATE projects SET title=$1,description=$2,url=$3,tags=$4,sort_order=$5 WHERE id=$6 RETURNING id", p.Title, p.Description, p.URL, p.Tags, p.SortOrder, id).Scan(&p.ID)
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		c.Status(404)
@@ -349,7 +364,7 @@ func (a *app) contact(c *gin.Context) {
 		c.Status(400)
 		return
 	}
-	_, err := a.db.Exec(c.Request.Context(), "INSERT INTO contact_messages(name,email,message) VALUES($1,$2,$3)", input.Name, input.Email, input.Message)
+	_, err := a.db.Exec(c.Request.Context(), "INSERT INTO contact_messages(name,email,message,email_pending) VALUES($1,$2,$3,true)", input.Name, input.Email, input.Message)
 	if err != nil {
 		c.JSON(503, gin.H{"error": "Unable to save message"})
 		return

@@ -8,7 +8,7 @@ export default function Admin() {
     useEffect(()=>{ api("/auth/me").then(()=>{setSignedIn(true); return refresh();}).catch(()=>{}).finally(()=>setChecking(false)); },[]);
     async function run(action:()=>Promise<void>) { setBusy(true); setError(""); try { await action(); } catch(e){setError((e as Error).message);} finally{setBusy(false);} }
     function login(e:React.FormEvent<HTMLFormElement>) { e.preventDefault(); const data=Object.fromEntries(new FormData(e.currentTarget)); void run(async()=>{await api("/auth/login",{method:"POST",body:JSON.stringify(data)}); setSignedIn(true); await refresh();}); }
-    function save(e:React.FormEvent<HTMLFormElement>) { e.preventDefault(); const form=e.currentTarget; const data=Object.fromEntries(new FormData(form)); void run(async()=>{await api(editing ? "/admin/projects/"+editing.id : "/admin/projects",{method:editing?"PUT":"POST",body:JSON.stringify({...data,tags:String(data.tags).split(",").map(t=>t.trim()).filter(Boolean)})}); setEditing(null); form.reset(); await refresh();}); }
+    function save(e:React.FormEvent<HTMLFormElement>) { e.preventDefault(); const form=e.currentTarget; const data=Object.fromEntries(new FormData(form)); void run(async()=>{await api(editing ? "/admin/projects/"+editing.id : "/admin/projects",{method:editing?"PUT":"POST",body:JSON.stringify({...data,sort_order:Number(data.sort_order),tags:String(data.tags).split(",").map(t=>t.trim()).filter(Boolean)})}); setEditing(null); form.reset(); await refresh();}); }
     return (
         <main className="mx-auto max-w-3xl px-6 py-12">
             <a href="/" className="text-sm text-primary">← Portfolio</a>
@@ -49,6 +49,11 @@ export default function Admin() {
                         <label htmlFor="tags">Tags (comma separated)</label>
                         <input id="tags" name="tags" defaultValue={editing?.tags.join(", ")}/>
                     </div>
+                    <div>
+                        <label htmlFor="sort_order">Sort order</label>
+                        <input id="sort_order" name="sort_order" type="number" min={0} max={2147483647} step={1} required defaultValue={editing?.sort_order ?? 0} aria-describedby="sort-order-help"/>
+                        <p id="sort-order-help" className="mt-2 text-sm text-zinc-400">Lower numbers appear first. Projects with the same number show newest first.</p>
+                    </div>
                     <div className="flex gap-3">
                         <Button disabled={busy}>Save project</Button>
                         {
@@ -60,7 +65,7 @@ export default function Admin() {
                     {
                     projects.map(p=>
                         <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 p-4">
-                            <span>{p.title}</span>
+                            <div><span>{p.title}</span><p className="mt-1 text-xs text-zinc-400">Sort order: {p.sort_order}</p></div>
                             <div className="flex gap-2">
                                 <Button size="sm" variant="outline" disabled={busy} onClick={()=>setEditing(p)}>Edit</Button>
                                 <Button size="sm" variant="outline" disabled={busy} onClick={()=>{if(window.confirm('Delete "'+p.title+'"?')) void run(async()=>{await api("/admin/projects/"+p.id,{method:"DELETE"});if(editing?.id===p.id)setEditing(null);await refresh();});}}>Delete</Button>

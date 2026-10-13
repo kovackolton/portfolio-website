@@ -1,6 +1,22 @@
-export type Project = { id: number; title: string; description: string; url: string; tags: string[] };
+export type Project = { 
+    id: number; 
+    title: string; 
+    description: string; 
+    url: string; 
+    tags: string[]; 
+    sort_order: number 
+};
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-    const res = await fetch("/api" + path, { ...init, headers: { "Content-Type": "application/json", ...init?.headers }, cache: "no-store" });
+    const res = await fetch(
+        "/api" + path, { 
+            ...init, 
+            headers: { 
+                "Content-Type": "application/json", 
+                ...init?.headers 
+            }, 
+        cache: "no-store" 
+    });
+    
     if (!res.ok) { 
         const body = await res.json().catch(() => ({})); 
         throw new Error(body.error || "Request failed (" + res.status + ")"); 

@@ -50,7 +50,7 @@ Admin credentials come from environment variables; password is bcrypt-hashed on 
 
 Rate limits use atomic Redis counters with expiry and fail closed during Redis outages. Next proxies all requests, so the conservative default quota is shared across visitors by proxy IP. For per-visitor limits, configure a trusted ingress that strips and sets client-IP headers and explicitly configure Gin trusted proxies. Do not trust arbitrary forwarded headers.
 
-Project cache TTL is 60 seconds; mutations rotate a generation to prevent stale concurrent fills. During failed invalidation, stale entries expire within 60 seconds. Project reads fall back to PostgreSQL if Redis is unavailable. Uptime and counters reset on API restart and are instance-local. Uptime is process age, not historical availability; memory is allocated Go heap, not total host memory. Health returns 503 if either dependency is unhealthy. Contacts are stored privately; email delivery and an inbox UI are not included.
+Project cache TTL is 60 seconds; mutations rotate a generation to prevent stale concurrent fills. During failed invalidation, stale entries expire within 60 seconds. Project reads fall back to PostgreSQL if Redis is unavailable. Uptime and counters reset on API restart and are instance-local. Uptime is process age, not historical availability; memory is allocated Go heap, not total host memory. Health returns 503 if either dependency is unhealthy. Contacts are stored privately and queued for email notification to ADMIN_EMAIL when SMTP is configured. See [backend/CONTACT_EMAIL.md](backend/CONTACT_EMAIL.md) for setup and retry behavior. An inbox UI is not included.
 
 ## Google Cloud SQL
 
@@ -74,6 +74,8 @@ In frontend: npm run typecheck; npm run build
 In backend: go test ./...; go vet ./...
 
 ## Customize
+
+Use the admin form's Sort order field to arrange projects: lower nonnegative whole numbers appear first. Equal values retain newest-first ordering. Existing projects receive 0 automatically without changing their creation dates. The order value is displayed only in the admin interface. Saving an order change invalidates the Redis project cache. Run `node scripts/sort-order-smoke.mjs` against the local Docker stack to check ordering and validation using temporary projects.
 
 Edit frontend/src/app/page.tsx for your name, biography, and links; layout.tsx for metadata. Manage projects at /admin. components.json configures adding shadcn/ui components. Add external API integrations following the Redis cache pattern, with tokens kept server-side.
 

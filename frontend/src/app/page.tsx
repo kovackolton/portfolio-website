@@ -80,7 +80,7 @@ export default function Home() {
 				
 				<div role="region" aria-roledescription="carousel" aria-label="Website stack and skills" className="self-center rounded-xl border border-zinc-800 bg-zinc-900/60 p-7 font-mono text-sm">
 					<div className="mb-8 flex gap-2" role="group" aria-label="Choose a slide">
-						{["Website stack", "My skills"].map((label, index) => (
+						{["My skills", "Website stack"].map((label, index) => (
 							<button
 								key={label}
 								type="button"
@@ -95,25 +95,29 @@ export default function Home() {
 						))}
 					</div>
 					<div id="stack-slides" className="grid" aria-live="polite">
-					<div role="group" aria-roledescription="slide" aria-label="1 of 2: Website stack" aria-hidden={stackSlide !== 0} className={"col-start-1 row-start-1 " + (stackSlide === 0 ? "visible" : "invisible")}>
-					<p className="text-zinc-500">// built from the ground up</p>
-					<p className="mt-5"><span className="text-primary">const</span> stack = {"{"}</p>
-					<div className="space-y-3 py-4 pl-5 text-zinc-400">
-						<p>interface: <span className="text-white">"Next.js + React"</span>,</p>
-						<p>engine: <span className="text-white">"Go + Gin"</span>,</p>
-						<p>storage: <span className="text-white">"PostgreSQL"</span>,</p>
-						<p>cache: <span className="text-white">"Redis"</span></p>
-					</div>
-					<p>{"};"}</p>
-					</div>
-					<div role="group" aria-roledescription="slide" aria-label="2 of 2: My skills" aria-hidden={stackSlide !== 1} className={"col-start-1 row-start-1 " + (stackSlide === 1 ? "visible" : "invisible")}>
-						<p className="text-zinc-500">// my skills</p>
-						<p className="mt-5"><span className="text-primary">const</span> skills = {"{"}</p>
-						<div className="space-y-3 py-4 pl-5 text-zinc-400">
-							{/* Add your skills here using <p> rows, like the website stack above. */}
+						<div role="group" aria-roledescription="slide" aria-label="1 of 2: My skills" aria-hidden={stackSlide !== 0} className={"col-start-1 row-start-1 " + (stackSlide === 0 ? "visible" : "invisible")}>
+							<p className="text-zinc-500">// my skills</p>
+							<p className="mt-5"><span className="text-primary">const</span> skills = {"{"}</p>
+							<div className="space-y-3 py-4 pl-5 text-zinc-400">
+								<p>frontend: <span className="text-white">["Angular", "React"]</span>,</p>
+								<p>backend: <span className="text-white">["Node.js", "C#", "Java", "Go"]</span>,</p>
+								<p>cloud: <span className="text-white">["AWS", "GCP"]</span>,</p>
+								<p>databases: <span className="text-white">["PostgreSQL", "MySQL"]</span>,</p>
+							</div>
+							<p>{"};"}</p>
 						</div>
-						<p>{"};"}</p>
-					</div>
+						<div role="group" aria-roledescription="slide" aria-label="2 of 2: Website stack" aria-hidden={stackSlide !== 1} className={"col-start-1 row-start-1 " + (stackSlide === 1 ? "visible" : "invisible")}>
+							<p className="text-zinc-500">// This portfolio: built from the ground up via agentic coding</p>
+							<p className="mt-5"><span className="text-primary">const</span> stack = {"{"}</p>
+							<div className="space-y-3 py-4 pl-5 text-zinc-400">
+								<p>agent: <span className="text-white">"Codex"</span>,</p>
+								<p>interface: <span className="text-white">"Next.js + React"</span>,</p>
+								<p>engine: <span className="text-white">"Go + Gin"</span>,</p>
+								<p>storage: <span className="text-white">"PostgreSQL"</span>,</p>
+								<p>cache: <span className="text-white">"Redis"</span></p>
+							</div>
+							<p>{"};"}</p>
+						</div>
 					</div>
 				</div>
 			</section>
@@ -122,11 +126,30 @@ export default function Home() {
 				<div className="mb-9 flex items-end justify-between">
 					<div>
 						<p className="font-mono text-xs text-primary">01 / SELECTED WORK</p>
-						<h2 className="mt-3 text-3xl font-semibold">Projects with a purpose.</h2>
+						<h2 className="mt-3 text-3xl font-semibold">Projects</h2>
 					</div>
 					<span className="text-sm text-zinc-500">{projects.length} projects</span>
 				</div>
-				{projectError ? <p className="rounded-xl border border-zinc-800 p-8 text-zinc-400">{projectError}. Start the backend to load projects.</p> : projects.length === 0 ? <div className="rounded-xl border border-dashed border-zinc-700 p-10 text-zinc-400">Projects will appear here as they are published.</div> : <div className="grid gap-5 md:grid-cols-2">{projects.map((p,i) => <article key={p.id} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-7"><p className="mb-10 font-mono text-xs text-zinc-500">PROJECT / {String(i+1).padStart(2,"0")}</p><h3 className="text-2xl">{p.title}</h3><p className="my-4 whitespace-pre-wrap leading-relaxed text-zinc-400">{p.description}</p><div className="mb-7 flex flex-wrap gap-2">{p.tags.map((t,j)=><span key={j} className="rounded bg-zinc-800 px-2 py-1 font-mono text-xs text-zinc-300">{t}</span>)}</div>{p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="inline-flex gap-2 text-sm text-primary">View project <ArrowUpRight size={16}/></a>}</article>)}</div>}
+				{ projectError ? 
+					<p className="rounded-xl border border-zinc-800 p-8 text-zinc-400">{projectError}. Start the backend to load projects.</p> 
+					: projects.length === 0 ? 
+						<div className="rounded-xl border border-dashed border-zinc-700 p-10 text-zinc-400">Projects will appear here as they are published.</div> 
+						: <div className="grid gap-5 md:grid-cols-2">{projects.map((p,i) => 
+							<article key={p.id} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-7">
+								<p className="mb-10 font-mono text-xs text-zinc-500">PROJECT / {String(i+1).padStart(2,"0")}</p>
+								<h3 className="text-2xl">{p.title}</h3>
+								<p className="my-4 whitespace-pre-wrap leading-relaxed text-zinc-400">{p.description}</p>
+								<div className="mb-7 flex flex-wrap gap-2">
+									{
+										p.tags.map((t,j)=><span key={j} className="rounded bg-zinc-800 px-2 py-1 font-mono text-xs text-zinc-300">{t}</span>)
+									}
+									</div>
+								{
+									p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="inline-flex gap-2 text-sm text-primary">View project <ArrowUpRight size={16}/></a>
+								}
+							</article>)}
+						</div>
+				}
 			</section>
 
 			<section id="systems" className="border-t border-zinc-800 py-16">
@@ -149,7 +172,7 @@ export default function Home() {
 			<section id="contact" className="grid gap-12 border-t border-zinc-800 py-16 md:grid-cols-2">
 				<div>
 					<p className="font-mono text-xs text-primary">03 / SAY HELLO</p>
-					<h2 className="mt-3 text-4xl font-semibold">Let’s build something<br />worth sharing.</h2>
+					<h2 className="mt-3 text-4xl font-semibold">Let’s build something<br />together.</h2>
 					<p className="mt-5 text-zinc-400">Send a note about a project or an opportunity. Messages are saved privately in PostgreSQL.</p>
 				</div>
 				<form onSubmit={contact} className="space-y-4">
@@ -171,8 +194,8 @@ export default function Home() {
 			</section>
 
 			<footer className="flex justify-between border-t border-zinc-800 py-8 text-xs text-zinc-500">
-				<span>Built with Go, Next.js, and a little curiosity.</span>
-				<span>Portfolio / {new Date().getFullYear()}</span>
+				<span>Software Engineer</span>
+				<span>Kolton Kovac / Portfolio / {new Date().getFullYear()}</span>
 			</footer>
 		</main>
 	);
